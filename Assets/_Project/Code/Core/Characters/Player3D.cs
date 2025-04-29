@@ -1,4 +1,5 @@
 ﻿using _Project.Code.Architecture;
+using _Project.Code.Core.Characters;
 using _Project.Code.Core.Motor.Jumping;
 using _Project.Code.Core.Motor.Movement;
 using _Project.Code.Core.Motor.Movement._2D;
@@ -10,66 +11,47 @@ using Zenject;
 namespace _Project.Code.Core
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class Player3D : MonoBehaviour
+    public class Player3D : BasePlayer
     {
-        [SerializeField] private Transform _groundCheckPoint;
-        [SerializeField] private Transform _attackPoint;
-        [SerializeField] private float _attackDamage = 1;
-
-        [Inject] private ICharacterInput _input;
-
-        private GroundChecker _groundChecker;
-        private Jumper _jumper;
-        private RigidBodyMover _mover;
-        private IComponentCollisionDetector _componentCollisionDetector;
-        private Attacker _attacker;
         private TransformLookRotator _rotator;
+        
+        [Inject] private PlayerSettings _playerSettings;
 
-        private void Awake()
+        protected override void InitializeComponents()
         {
             var rigidbody = GetComponent<Rigidbody>();
             var velocity = new UniversalRigidbodyVelocity(rigidbody);
 
-            _rotator = new TransformLookRotator(transform, 250);
-            _mover = new RigidBodyMover(velocity, 10);
-            _jumper = new Jumper(velocity, 10);
+            float moveSpeed = _settings != null ? _settings.MoveSpeed : _playerSettings.MoveSpeed;
+            float jumpForce = _settings != null ? _settings.JumpForce : _playerSettings.JumpForce;
+            float rotationSpeed = _settings != null ? _settings.RotationSpeed : _playerSettings.RotationSpeed;
+            float attackDamage = _settings != null ? _settings.AttackDamage : _playerSettings.AttackDamage;
+            float attackRadius = _settings != null ? _settings.AttackRadius : _playerSettings.AttackRadius;
+
+            _rotator = new TransformLookRotator(transform, rotationSpeed);
+            _mover = new RigidBodyMover(velocity, moveSpeed);
+            _jumper = new Jumper(velocity, jumpForce);
             _groundChecker = new GroundChecker(_groundCheckPoint);
 
-            _componentCollisionDetector = new OverlapCollisionDetector(_attackPoint, 0.5f, ~0);
-            _attacker = new Attacker(_attackDamage);
+            _componentCollisionDetector = new OverlapCollisionDetector(_attackPoint, attackRadius, ~0);
+            _attacker = new Attacker(attackDamage);
         }
 
-        private void FixedUpdate()
+        protected override Vector3 GetMovementDirection()
         {
-            HandleMotor();
-            HandleCollision();
-        }
-
-        private void HandleMotor()
-        {
-            if (_input.IsJumping && _groundChecker.IsGrounded())
-            {
-                _jumper.Jump();
-            }
-
             var direction = new Vector3(_input.Axis.x, 0, _input.Axis.y);
-
-            _mover.Move(direction);
-
+            
             if (direction.magnitude > 0.1f)
                 _rotator.Rotate(direction, Time.fixedDeltaTime);
+                
+            return direction;
         }
 
-        private void HandleCollision()
+        protected override void CheckForEnemyCollision()
         {
             if (_componentCollisionDetector.IsColliding(out Enemy enemy))
             {
                 _attacker.Attack(enemy);
-            }
-
-            if (_componentCollisionDetector.IsColliding(out LevelFinish levelFinish))
-            {
-                levelFinish.Trgger();
             }
         }
     }

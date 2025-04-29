@@ -1,32 +1,25 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-namespace _Project.Code.Core
+namespace _Project.Code.Core.Characters
 {
-    public class Enemy2D : MonoBehaviour, IDamageable
+    public class Enemy2D : BaseEnemy
     {
         [SerializeField] private SpriteRenderer _spriteRenderer;
-        [SerializeField] private float _healthValue = 3;
+        [SerializeField] private float _flashDuration = 0.1f;
 
-        private Health.Health _health;
-        
-        private void Awake() => 
-            _health = new Health.Health(_healthValue, _healthValue);
-
-        public void TakeDamage(float damage)
+        protected override IEnumerator OnDamageEffect()
         {
-            _health.TakeDamage(damage);
-            
-            StartCoroutine(GetDamaged());
-            
-            if (_health.Value <= 0) Destroy(gameObject);
-        }
-
-        IEnumerator GetDamaged()
-        {
-            _spriteRenderer.color = Color.red;
-            yield return new WaitForSeconds(0.1f);
-            _spriteRenderer.color = Color.white;
+            if (_spriteRenderer != null)
+            {
+                _spriteRenderer.color = Color.red;
+                yield return new WaitForSeconds(_flashDuration);
+                _spriteRenderer.color = Color.white;
+            }
+            else
+            {
+                yield return null;
+            }
         }
     }
 }

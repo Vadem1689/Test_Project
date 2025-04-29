@@ -1,7 +1,5 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using _Project.Code.Architecture;
-using Unity.VisualScripting;
 using UnityEngine;
 using Zenject;
 
@@ -12,22 +10,29 @@ namespace _Project.Code.Core
         [Inject] private CoroutinePerformer _coroutineRunner;
         [Inject] private ISceneLoader _sceneLoader;
         [Inject] private LoadingCurtain _loadingCurtain;
+        
+        [SerializeField] private SceneID _nextSceneID = SceneID.Gameplay3D;
     
         private bool _isTriggered;
 
-        public void Trgger()
+        public void Trigger()
         {
             if (_isTriggered) return;
             
-            _coroutineRunner.StartCoroutine(SwitchScene());            
+            _coroutineRunner.StartPerform(SwitchScene());            
             
             _isTriggered = true;
+        }
+        
+        public void Trgger()
+        {
+            Trigger();
         }
         
         private IEnumerator SwitchScene()
         {
             yield return _loadingCurtain.Show();
-            yield return _sceneLoader.LoadAsync(SceneID.Gameplay3D);
+            yield return _sceneLoader.LoadAsync(_nextSceneID);
             yield return _loadingCurtain.Hide();
         }
     }

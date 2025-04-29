@@ -1,52 +1,40 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-namespace _Project.Code.Core
+namespace _Project.Code.Core.Characters
 {
-    public class Enemy : MonoBehaviour, IDamageable
+    public class Enemy : BaseEnemy
     {
         [SerializeField] private SkinnedMeshRenderer[] _meshRenderers;
         [SerializeField] private MeshRenderer[] _meshRenderers2;
-        [SerializeField] private int _healthValue = 3;
+        [SerializeField] private float _flashDuration = 0.1f;
 
-        private Health.Health _health;
-
-        private void Awake()
-        {
-            _health = new Health.Health(_healthValue, _healthValue);
-        }
-
-        public void TakeDamage(float damage)
-        {
-            _health.TakeDamage(damage);
-
-            StartCoroutine(GetDamaged());
-
-            if (_health.Value <= 0) Destroy(gameObject);
-        }
-
-        private IEnumerator GetDamaged()
+        protected override IEnumerator OnDamageEffect()
         {
             foreach (var renderer in _meshRenderers)
             {
-                renderer.material.color = Color.red;
+                if (renderer != null)
+                    renderer.material.color = Color.red;
             }
         
             foreach (var renderer in _meshRenderers2)
             {
-                renderer.material.color = Color.red;
+                if (renderer != null)
+                    renderer.material.color = Color.red;
             }
         
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(_flashDuration);
         
             foreach (var renderer in _meshRenderers)
             {
-                renderer.material.color = Color.white;
+                if (renderer != null)
+                    renderer.material.color = Color.white;
             }
        
             foreach (var renderer in _meshRenderers2)
             {
-                renderer.material.color = Color.white;
+                if (renderer != null)
+                    renderer.material.color = Color.white;
             }
         }
     }
